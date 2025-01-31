@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="orderFormData" format="json">
+      <types:shape format="weave" example="examples/idp-orderform.json"><![CDATA[%dw 2.0
+
+type orderFormData = {|
+  "Offer Valid Through": String, 
+  "Proposed by": String, 
+  Email: String, 
+  "Quote Number": String, 
+  "Order Form for": String, 
+  Company: String, 
+  Address: String, 
+  "Bill To": {| Address: String |}, 
+  "Ship To": {| Address: String |}, 
+  "Billing Company Name": String, 
+  "Billing Contact Name": String, 
+  "Billing Email Address": String, 
+  "Billing Phone": String, 
+  "Billing Fax": String, 
+  "Billing Language": String, 
+  "Contract Start Date": String, 
+  "Contract End Date": String, 
+  "Billing Frequency": String, 
+  "Payment Method": String, 
+  "Payment Terms": String, 
+  "Billing Method": String, 
+  Services: Array<{|    Service: String,     "Order Start Date": String,     "Order End Date": String,     "Order Term (months)": Number {"typeId": "int"},     "Monthly/Unit Price": String,     Quantity: Number {"typeId": "int"},     "Total Price": String  |}>, 
+  Total: String, 
+  "Usage Details": Array<{|    "Usage Type": String,     "Start Date": String,     "End Date": String,     Quantity: Number {"typeId": "int"},     "Usage Rate": String,     "Billing Model": String  |}>
+|} {"example": "{\\\"Offer Valid Through\\\":\\\"01\\/31\\/2025\\\",\\\"Proposed by\\\":\\\"Christina Roche\\\",\\\"Email\\\":\\\"christina.roche@salesforce.com\\\",\\\"Quote Number\\\":\\\"Q-09669624\\\",\\\"Order Form for\\\":\\\"ABC Company\\\",\\\"Company\\\":\\\"Salesforce, Inc.\\\",\\\"Address\\\":\\\"Salesforce Tower, 415 Mission Street, 3rd Floor, San Francisco, CA 94105\\\",\\\"Bill To\\\":{\\\"Address\\\":\\\"555 9th Street, San Francisco, CA, 94123, US United States\\\"},\\\"Ship To\\\":{\\\"Address\\\":\\\"555 9th Street, San Francisco, CA, 94123, US United States\\\"},\\\"Billing Company Name\\\":\\\"ABC Company\\\",\\\"Billing Contact Name\\\":\\\"John Doe\\\",\\\"Billing Email Address\\\":\\\"jdoe@abccompany.com\\\",\\\"Billing Phone\\\":\\\"(555)123-4567\\\",\\\"Billing Fax\\\":\\\"(555)345-8911\\\",\\\"Billing Language\\\":\\\"English\\\",\\\"Contract Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"Contract End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Billing Frequency\\\":\\\"Quarterly\\\",\\\"Payment Method\\\":\\\"Check\\\",\\\"Payment Terms\\\":\\\"Net 30\\\",\\\"Billing Method\\\":\\\"Email\\\",\\\"Services\\\":[{\\\"Service\\\":\\\"Automation Starter\\\",\\\"Order Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"Order End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Order Term (months)\\\":12,\\\"Monthly\\/Unit Price\\\":\\\"USD 7,500.00\\\",\\\"Quantity\\\":1,\\\"Total Price\\\":\\\"USD 90,000.00\\\"}],\\\"Total\\\":\\\"USD 90,000.00\\\",\\\"Usage Details\\\":[{\\\"Usage Type\\\":\\\"Automation Credits 2.0\\\",\\\"Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Quantity\\\":9000000,\\\"Usage Rate\\\":\\\"USD 0.01500000\\\",\\\"Billing Model\\\":\\\"Monthly in arrears\\\"},{\\\"Usage Type\\\":\\\"API Manager Production\\\",\\\"Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Quantity\\\":2,\\\"Usage Rate\\\":\\\"USD 405.00000000\\\",\\\"Billing Model\\\":\\\"Monthly in arrears\\\"},{\\\"Usage Type\\\":\\\"API Manager Pre-Production\\\",\\\"Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Quantity\\\":2,\\\"Usage Rate\\\":\\\"USD 405.00000000\\\",\\\"Billing Model\\\":\\\"Monthly in arrears\\\"},{\\\"Usage Type\\\":\\\"APIs Under Governance\\\",\\\"Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Quantity\\\":2,\\\"Usage Rate\\\":\\\"USD 142.50000000\\\",\\\"Billing Model\\\":\\\"Monthly in arrears\\\"},{\\\"Usage Type\\\":\\\"Mule Flows Starter\\\",\\\"Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Quantity\\\":30,\\\"Usage Rate\\\":\\\"USD 45.00000000\\\",\\\"Billing Model\\\":\\\"Monthly in arrears\\\"},{\\\"Usage Type\\\":\\\"Mule Messages - Starter\\\",\\\"Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Quantity\\\":2000000,\\\"Usage Rate\\\":\\\"USD 0.00099000\\\",\\\"Billing Model\\\":\\\"Monthly in arrears\\\"},{\\\"Usage Type\\\":\\\"Data Throughput (GB)\\\",\\\"Start Date\\\":\\\"01\\/31\\/2025\\\",\\\"End Date\\\":\\\"01\\/30\\/2026\\\",\\\"Quantity\\\":6000,\\\"Usage Rate\\\":\\\"USD 0.72000000\\\",\\\"Billing Model\\\":\\\"Monthly in arrears\\\"}]}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#b35d7ae4-32ff-460a-919d-cfc053d45c96">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="orderFormData"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:idp-idp-order-form-110="http://www.mulesoft.org/schema/mule/idp-idp-order-form-110" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:idp-idp-order-form-100="http://www.mulesoft.org/schema/mule/idp-idp-order-form-100" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/idp-idp-order-form-100 http://www.mulesoft.org/schema/mule/idp-idp-order-form-100/current/mule-idp-idp-order-form-100.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/idp-idp-order-form-110 http://www.mulesoft.org/schema/mule/idp-idp-order-form-110/current/mule-idp-idp-order-form-110.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="8829a478-3fad-47ba-afcc-7516cb729dbe" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config_Manufacturing" doc:name="Salesforce Config" doc:id="b31e8a5c-6af3-438b-841e-f0cbb201dbc7" >
+		<salesforce:basic-connection username="${sfdc.usernameManufacturing}" password="${sfdc.passwordManufacturing}" />
+	</salesforce:sfdc-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="ee0bebe9-82ce-4885-aa9d-bf96ff554b26" file="credentials.properties" />
+	<idp-idp-order-form-110:config name="IDP___IDP___Order_Form___1_1_0_Config" doc:name="IDP - IDP - Order Form - 1.1.0 Config" doc:id="2695a2cf-6550-4f07-8d0c-fe2e24ca6a41" property_host="${idp.host}" property_port="${idp.port}" property_basePath="${idp.basePath}" property_protocol="${idp.protocol}" property_client-id="${idp.clientId}" property_client-secret="${idp.clientSecret}" />
+	<flow name="Flow" doc:id="1402f595-d1ba-4b34-9772-d1dccfc24597" >
+		<http:listener doc:name="/processDoc" doc:id="03dc9b67-977a-4d4a-a1f3-dfa4e12ceeb5" config-ref="HTTP_Listener_config" path="/processDoc"/>
+		<idp-idp-order-form-110:postdocumentactionexecution doc:name="postDocumentActionExecution" doc:id="341a8016-c241-4629-9a3d-c5f1a991f24e" config-ref="IDP___IDP___Order_Form___1_1_0_Config"/>
+		<until-successful maxRetries="50" doc:name="Until Successful" doc:id="a1b1327a-ab7e-4eb7-9f2b-51b507b05d1f" millisBetweenRetries="500">
+			<idp-idp-order-form-110:getdocumentactionexecution doc:name="getDocumentActionExecution" doc:id="931fac10-17ff-462f-9c54-6634aa6bbcae" config-ref="IDP___IDP___Order_Form___1_1_0_Config" execution-id="#[payload.id]"/>
+			<choice doc:name="Choice" doc:id="ad9a5ebe-640a-47a4-81b0-4a4305587631" >
+				<when expression='#[payload.status != "IN_PROGRESS" and payload.status != "ACKNOWLEDGED"]'>
+					<set-variable value="#[payload]" doc:name="Extracted Data" doc:id="08095413-cda7-497d-9929-5adb1174ca17" variableName="extractedData"/>
+					<ee:transform doc:name="Convert IDP value to JSON" doc:id="4f3533f5-38f1-4417-ade3-5719a1a68fe0">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+read(payload.prompts.order_form_information.answer.value, "application/json")
+]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<set-variable value="#[payload]" doc:name="Extracted Order Form Value" doc:id="e9dce483-5c40-42fc-bf14-9b05eeff925f" variableName="extractedOrderFormValue"/>
+					<set-variable value="#[payload.Total]" doc:name="Extracted Order Form Total Amount" doc:id="20e7e95b-6ac9-4e38-8451-f454ec6b6661" variableName="orderFormTotalAmount"/>
+					<salesforce:query doc:name="Opportunity" doc:id="d1428522-5796-42ce-8cb7-019fadf1fcea" config-ref="Salesforce_Config_Manufacturing">
+						<salesforce:salesforce-query ><![CDATA[SELECT Id, Name, Amount, Account.Name 
+FROM Opportunity 
+WHERE Id = '006Hp000019FvytIAC']]></salesforce:salesforce-query>
+					</salesforce:query>
+					<set-variable value="#[payload.Amount[0]]" doc:name="Opportunity Amount" doc:id="9a36444b-10bf-4464-91fc-828c98c139e0" variableName="opportunityAmount"/>
+					<logger level="INFO" doc:name="Logger" doc:id="544a660e-6e3f-4b90-a9cd-f1d2e8597717" message='#[%dw 2.0&#10;output application/java&#10;---&#10;{&#10;	"OpportunityAmount": vars.orderFormTotalAmount as Number,&#10;	"ExtractedTotal": vars.opportunityAmount as Number&#10;}]'/>
+					<choice doc:name="Compare Amounts" doc:id="198ae47a-f102-4f4d-af7f-9477cadd0523" >
+						<when expression="#[vars.orderFormTotalAmount as Number == vars.opportunityAmount as Number]">
+							<ee:transform doc:name="Transform Message" doc:id="b35d7ae4-32ff-460a-919d-cfc053d45c96" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+var orderForm = vars.extractedOrderFormValue
+---
+[{
+	Id: '006Hp000019FvytIAC',
+	StageName: 'Closed',
+	IDP_Description__c: vars.extractedOrderFormValue."Quote Number",
+	IDP_Document_Name__c: vars.extractedData.documentName
+}]
+]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+							<logger level="INFO" doc:name="Logger" doc:id="26cea479-4217-4686-8ec7-7dd2724b4181" message="#[payload]"/>
+							<salesforce:upsert objectType="Opportunity" externalIdFieldName="Id" doc:name="Update Stage to Closed" doc:id="93f4c625-55a9-4e0f-9e49-b740ee8d020c" config-ref="Salesforce_Config_Manufacturing" />
+							<ee:transform doc:name="Transform Message" doc:id="984b4b66-20e4-4a95-94a8-291fbd3fad1c" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</when>
+						<otherwise >
+							<raise-error doc:name="Raise error" doc:id="a4019f42-359f-49a9-98c4-db13e87bd6a2" type="IDP:IN_PROGRESS" description="IDP still in progress" />
+						</otherwise>
+					</choice>
+				</when>
+				<otherwise>
+					<raise-error doc:name="Raise error" doc:id="822d74ba-b487-4a68-8ee5-0a7ba1cc5d3e" type="IDP:IN_PROGRESS" description="IDP still in progress" />
+				</otherwise>
+			</choice>
+		</until-successful>
+	</flow>
+</mule>
